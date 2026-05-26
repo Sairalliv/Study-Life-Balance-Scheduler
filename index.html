@@ -653,7 +653,7 @@ let selectedDate = toDateStr(new Date());
 let formCat = 'study';
 let currentUser = null;
 let authMode = 'login';
-let isAuthInitialized = false; // prevent duplicate loads from onAuthStateChange
+let isAuthInitialized = false;
 
 /* ─── HELPERS ───────────────────────────────────────── */
 function toDateStr(d) { return d.toISOString().slice(0,10); }
@@ -708,7 +708,7 @@ async function doAuth() {
     if(authMode === 'login') {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if(error) throw error;
-      // Do NOT call loadUserEvents or showApp here – onAuthStateChange will trigger
+      // onAuthStateChange will handle the rest
     } else {
       const { error } = await sb.auth.signUp({ email, password });
       if(error) throw error;
@@ -719,7 +719,7 @@ async function doAuth() {
     showAuthError(err.message || 'Sign in failed. Please try again.');
     console.error('Auth error:', err);
   } finally {
-    // Only re-enable button if we're still on the auth screen (login error or after signup)
+    // Re-enable button only if still on auth screen (i.e., login failed or after signup)
     if(document.getElementById('auth-screen').style.display !== 'none') {
       btn.disabled = false;
       btn.innerHTML = authMode==='login'
@@ -744,8 +744,7 @@ async function loadUserEvents() {
 
   if(error) {
     console.error('Load events error:', error);
-    showToast('Failed to load events');
-    return;
+    throw new Error('Failed to load events: ' + error.message);
   }
 
   events = (data || []).map(row => ({
@@ -758,15 +757,16 @@ async function loadUserEvents() {
   }));
 }
 
-function showAuth() {
-  document.getElementById('loading-overlay').classList.add('hidden');
+function hideLoadingAndShowAuth() {
+  const loadingOverlay = document.getElementById('loading-overlay');
+  if(loadingOverlay) loadingOverlay.classList.add('hidden');
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
-  setTimeout(()=>document.getElementById('auth-email').focus(), 100);
 }
 
 function showApp() {
-  document.getElementById('loading-overlay').classList.add('hidden');
+  const loadingOverlay = document.getElementById('loading-overlay');
+  if(loadingOverlay) loadingOverlay.classList.add('hidden');
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
   document.getElementById('user-email-display').textContent = currentUser?.email || '—';
@@ -776,43 +776,64 @@ function showApp() {
 }
 
 async function handleSession(session) {
-  if(session?.user) {
-    if(!isAuthInitialized) {
-      isAuthInitialized = true;
-      currentUser = session.user;
-      await loadUserEvents();
-      showApp();
+  try {
+    if(session?.user) {
+      if(!isAuthInitialized) {
+        isAuthInitialized = true;
+        currentUser = session.user;
+        await loadUserEvents();
+        showApp();
+      } else {
+        currentUser = session.user; // update reference if needed
+      }
     } else {
-      // Session already active, just update user reference
-      currentUser = session.user;
+      // No session -> show auth screen
+      isAuthInitialized = false;
+      currentUser = null;
+      events = [];
+      hideLoadingAndShowAuth();
     }
-  } else {
-    // No session -> show auth screen
-    isAuthInitialized = false;
-    currentUser = null;
-    events = [];
-    showAuth();
+  } catch (err) {
+    console.error('Session handling error:', err);
+    // Show auth screen with error message
+    hideLoadingAndShowAuth();
+    showAuthError('Could not load your data. Please try again later.');
   }
 }
 
 async function bootApp() {
+  // Set a safety timeout: after 5 seconds, force hide loading and show auth if not already done
+  const safetyTimeout = setTimeout(() => {
+    const overlay = document.getElementById('loading-overlay');
+    if(overlay && !overlay.classList.contains('hidden')) {
+      console.warn('Safety timeout: forcing auth screen');
+      overlay.classList.add('hidden');
+      if(!currentUser) {
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-screen').style.display = 'none';
+      }
+    }
+  }, 5000);
+
   // Listen for auth changes
   sb.auth.onAuthStateChange(async (event, session) => {
     await handleSession(session);
+    // Clear safety timeout once we have a decision
+    clearTimeout(safetyTimeout);
   });
 
   // Get current session
-  const { data: { session }, error } = await sb.auth.getSession();
-  if(error) console.error('Get session error:', error);
-  await handleSession(session);
-
-  // Fallback: if after 5 seconds nothing is shown (network issues), show auth
-  setTimeout(() => {
-    if(document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
-      document.getElementById('loading-overlay').classList.add('hidden');
-      if(!currentUser) showAuth();
-    }
-  }, 5000);
+  try {
+    const { data: { session }, error } = await sb.auth.getSession();
+    if(error) throw error;
+    await handleSession(session);
+  } catch (err) {
+    console.error('Get session error:', err);
+    hideLoadingAndShowAuth();
+    showAuthError('Unable to connect. Check your network and try again.');
+  } finally {
+    clearTimeout(safetyTimeout);
+  }
 }
 
 /* ─── DATABASE OPERATIONS ───────────────────────────── */
