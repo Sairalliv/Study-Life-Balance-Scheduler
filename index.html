@@ -1095,6 +1095,19 @@
   }
 
   bootApp();
+  // Warn before closing tab if logged in
+let hasLoggedOut = false;
+window.doSignOut = async function() {
+  hasLoggedOut = true;
+  await sb.auth.signOut();
+};
+window.addEventListener('beforeunload', (e) => {
+  if (currentUser && !hasLoggedOut) {
+    e.preventDefault();
+    e.returnValue = 'You are still signed in. Please click "Sign out" before leaving to avoid login issues next time.';
+    return e.returnValue;
+  }
+});
 })();
 </script>
 </body>
