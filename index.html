@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study-Life Balance Scheduler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FDFAF4;
+    --surface: #FFFFFF;
+    --surface2: #F5F1E8;
+    --border: #E5E0D3;
+    --border2: #D5CFBF;
+    --text: #1A1814;
+    --text2: #6B6357;
+    --text3: #9C9287;
+
+    --study: #2E6DA4;      --study-bg: #EAF2FB;  --study-t: #1A4D7A;
+    --life: #C4572A;       --life-bg: #FBF0EB;   --life-t: #8C3A18;
+    --health: #3F7A2E;     --health-bg: #EBF5E8; --health-t: #265219;
+    --social: #6B5FCC;     --social-bg: #F0EEFB; --social-t: #4A3FA3;
+    --rest: #A07820;       --rest-bg: #FBF4E3;   --rest-t: #705410;
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── AUTH SCREEN ── */
+  .auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: var(--bg);
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 400px;
+    padding: 2.2rem;
+  }
+  .auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.8rem;
+  }
+  .auth-brand-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--study), var(--social));
+    flex-shrink: 0;
+  }
+  .auth-brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .auth-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 1.6rem;
+  }
+  .auth-tabs {
+    display: flex;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 1.4rem;
+  }
+  .auth-tab {
+    flex: 1; padding: 8px; font-size: 13px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    background: none; border: none; cursor: pointer;
+    color: var(--text2); transition: all .15s;
+  }
+  .auth-tab.active { background: var(--text); color: var(--bg); }
+  .auth-field { margin-bottom: 12px; }
+  .auth-label {
+    display: block; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text3); margin-bottom: 5px;
+  }
+  .auth-input {
+    width: 100%; border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--text); background: var(--bg); outline: none;
+    transition: border-color .15s;
+  }
+  .auth-input:focus { border-color: var(--text); }
+  .auth-btn {
+    width: 100%; padding: 10px; background: var(--text);
+    color: var(--bg); border: none; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    font-weight: 500; cursor: pointer; margin-top: 6px;
+    transition: opacity .15s; display: flex;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .auth-btn:hover { opacity: .85; }
+  .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .auth-error {
+    background: #FBF0EB; border: 1px solid var(--life);
+    color: var(--life-t); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 12px; margin-bottom: 12px;
+    display: none;
+  }
+  .auth-error.show { display: block; }
+  .auth-success {
+    background: var(--health-bg); border: 1px solid var(--health);
+    color: var(--health-t); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 12px; margin-bottom: 12px;
+    display: none;
+  }
+  .auth-success.show { display: block; }
+
+  /* ── APP SCREEN ── */
+  #app-screen { display: none; }
+
+  /* ── LOADING OVERLAY ── */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; flex-direction: column; gap: 12px;
+  }
+  .loading-overlay.hidden { display: none; }
+  .loading-spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border2);
+    border-top-color: var(--text); border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  .loading-text { font-size: 13px; color: var(--text2); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--study), var(--social));
+  }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .user-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 20px;
+    font-size: 12px; color: var(--text2); max-width: 180px;
+  }
+  .user-chip i { font-size: 11px; color: var(--text3); }
+  .user-chip-email {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem; }
+  .layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; align-items: start; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    border-radius: var(--radius-sm); padding: 7px 14px; font-size: 13px;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; font-weight: 500;
+    transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-ghost {
+    background: none; border: 1px solid var(--border2); color: var(--text2);
+  }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-primary {
+    background: var(--text); color: var(--bg); border: none;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .btn-danger {
+    background: none; border: 1px solid #C0392B; color: #C0392B;
+  }
+  .btn-danger:hover { background: #FBF0EB; }
+  .btn-icon {
+    width: 32px; height: 32px; padding: 0; justify-content: center;
+    background: none; border: 1px solid var(--border2); color: var(--text2);
+    border-radius: var(--radius-sm);
+  }
+  .btn-icon:hover { background: var(--surface2); }
+
+  /* ── VIEW TOGGLE ── */
+  .view-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; }
+  .view-btn {
+    padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
+    border: none; background: none; color: var(--text2); font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .view-btn.active { background: var(--text); color: var(--bg); }
+
+  /* ── CONTROLS ── */
+  .cal-controls {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; gap: 10px;
+  }
+  .cal-controls-left { display: flex; align-items: center; gap: 8px; }
+  .cal-controls-right { display: flex; align-items: center; gap: 8px; }
+  .month-label {
+    font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 500;
+    min-width: 200px; color: var(--text);
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-inner { padding: 1.1rem; }
+  .card-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--text3); margin-bottom: 10px;
+  }
+
+  /* ── MONTH CALENDAR ── */
+  .day-names {
+    display: grid; grid-template-columns: repeat(7,1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .day-name {
+    text-align: center; padding: 8px 0; font-size: 10px; font-weight: 600;
+    color: var(--text3); text-transform: uppercase; letter-spacing: .06em;
+  }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .cal-cell {
+    min-height: 88px; border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); padding: 6px;
+    cursor: pointer; transition: background .12s; position: relative;
+  }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover { background: var(--surface2); }
+  .cal-cell.other-month { opacity: .3; pointer-events: none; }
+  .cal-cell.is-today .dn {
+    background: var(--text); color: var(--bg);
+    border-radius: 50%; width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-cell.is-selected { background: #F0EDE5; }
+  .dn {
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    width: 22px; height: 22px; display: flex; align-items: center;
+    justify-content: center; margin-bottom: 4px;
+  }
+  .edot {
+    font-size: 10px; border-radius: 4px; padding: 1px 5px;
+    margin-bottom: 2px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; font-weight: 500; line-height: 1.5;
+  }
+  .edot.study  { background:var(--study-bg); color:var(--study-t); }
+  .edot.life   { background:var(--life-bg);  color:var(--life-t);  }
+  .edot.health { background:var(--health-bg);color:var(--health-t);}
+  .edot.social { background:var(--social-bg);color:var(--social-t);}
+  .edot.rest   { background:var(--rest-bg);  color:var(--rest-t);  }
+
+  /* ── WEEK VIEW ── */
+  .week-head {
+    display: grid; grid-template-columns: 52px repeat(7,1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .week-head-cell {
+    text-align: center; padding: 10px 4px; cursor: pointer;
+    border-right: 1px solid var(--border);
+  }
+  .week-head-cell:last-child { border-right: none; }
+  .whc-day { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+  .whc-num { font-size: 20px; font-weight: 500; color: var(--text2); line-height: 1.3; }
+  .whc-num.today-n {
+    background: var(--text); color: var(--bg); border-radius: 50%;
+    width: 34px; height: 34px; display: flex; align-items: center;
+    justify-content: center; margin: 0 auto; font-size: 17px;
+  }
+  .week-body { display: flex; overflow-y: auto; max-height: 500px; }
+  .time-col { width: 52px; flex-shrink: 0; border-right: 1px solid var(--border); }
+  .time-slot {
+    height: 52px; display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 3px 8px 0 0;
+  }
+  .time-slot span { font-size: 10px; color: var(--text3); font-weight: 500; }
+  .week-cols { display: grid; grid-template-columns: repeat(7,1fr); flex: 1; }
+  .week-col {
+    position: relative; border-right: 1px solid var(--border); cursor: pointer;
+  }
+  .week-col:last-child { border-right: none; }
+  .hour-row { height: 52px; border-bottom: 1px solid var(--border); }
+  .half-line {
+    position: absolute; width: 100%; height: 1px;
+    background: var(--border); opacity: .5; pointer-events: none;
+  }
+  .week-event {
+    position: absolute; left: 2px; right: 2px; border-radius: 5px;
+    padding: 3px 5px; font-size: 10px; font-weight: 500; overflow: hidden;
+    cursor: pointer; z-index: 1; border-left: 3px solid;
+    transition: opacity .12s;
+  }
+  .week-event:hover { opacity: .85; }
+  .week-event.study  { background:var(--study-bg); color:var(--study-t); border-color:var(--study); }
+  .week-event.life   { background:var(--life-bg);  color:var(--life-t);  border-color:var(--life); }
+  .week-event.health { background:var(--health-bg);color:var(--health-t);border-color:var(--health);}
+  .week-event.social { background:var(--social-bg);color:var(--social-t);border-color:var(--social);}
+  .week-event.rest   { background:var(--rest-bg);  color:var(--rest-t);  border-color:var(--rest); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { display: flex; flex-direction: column; gap: .9rem; }
+
+  .score-wrap { text-align: center; padding: .2rem 0 .5rem; }
+  .score-num { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 500; color: var(--text); line-height: 1; }
+  .score-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-top: 2px; }
+  .score-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+  .score-fill { height: 100%; border-radius: 3px; background: var(--text); transition: width .6s ease; }
+
+  .bal-row { margin-bottom: 9px; }
+  .bal-labels { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .bal-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .bal-stat { font-size: 11px; color: var(--text3); }
+  .bal-track { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .bal-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+  .bal-fill.study  { background:var(--study); }
+  .bal-fill.life   { background:var(--life); }
+  .bal-fill.health { background:var(--health); }
+  .bal-fill.social { background:var(--social); }
+  .bal-fill.rest   { background:var(--rest); }
+
+  .tip-row { display: flex; gap: 9px; margin-bottom: 8px; align-items: flex-start; }
+  .tip-icon { font-size: 13px; color: var(--text3); flex-shrink: 0; margin-top: 1px; }
+  .tip-text { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  /* ── DAY PANEL ── */
+  .dpanel-head {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .add-here-btn {
+    font-size: 11px; color: var(--text3); background: none; border: none;
+    cursor: pointer; display: flex; align-items: center; gap: 3px;
+    font-family: 'DM Sans', sans-serif; font-weight: 500;
+    transition: color .12s;
+  }
+  .add-here-btn:hover { color: var(--text); }
+  .day-ev {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 9px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); margin-bottom: 5px;
+  }
+  .dev-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .dev-dot.study  { background:var(--study); }
+  .dev-dot.life   { background:var(--life); }
+  .dev-dot.health { background:var(--health); }
+  .dev-dot.social { background:var(--social); }
+  .dev-dot.rest   { background:var(--rest); }
+  .dev-info { flex: 1; min-width: 0; }
+  .dev-title { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dev-time { font-size: 11px; color: var(--text3); }
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); font-size: 13px; display: flex; align-items: center;
+    padding: 2px; opacity: .5; transition: opacity .12s;
+  }
+  .del-btn:hover { opacity: 1; color: #C0392B; }
+  .empty-day { font-size: 12px; color: var(--text3); text-align: center; padding: 14px 0; }
+
+  /* ── MODAL ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(20,16,10,.45);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow-md); width: 100%; max-width: 420px;
+    padding: 1.6rem; animation: fadeUp .18s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem;
+  }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 500; }
+  .modal-close {
+    background: none; border: none; cursor: pointer; color: var(--text3);
+    font-size: 18px; display: flex; align-items: center;
+  }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 13px; }
+  .form-label {
+    display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text3); margin-bottom: 5px;
+  }
+  input[type=text], input[type=date], input[type=time], input[type=email], input[type=password], select, textarea {
+    width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    padding: 8px 11px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--text); background: var(--bg); outline: none;
+    transition: border-color .15s;
+  }
+  input:focus, select:focus { border-color: var(--text); }
+  .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cat-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cat-pill {
+    border: 1px solid var(--border2); border-radius: 20px;
+    padding: 5px 12px; font-size: 12px; font-weight: 500;
+    cursor: pointer; color: var(--text2); background: none;
+    font-family: 'DM Sans', sans-serif; transition: all .12s;
+  }
+  .cat-pill.active.study  { background:var(--study-bg); border-color:var(--study); color:var(--study-t); }
+  .cat-pill.active.life   { background:var(--life-bg);  border-color:var(--life);  color:var(--life-t); }
+  .cat-pill.active.health { background:var(--health-bg);border-color:var(--health);color:var(--health-t);}
+  .cat-pill.active.social { background:var(--social-bg);border-color:var(--social);color:var(--social-t);}
+  .cat-pill.active.rest   { background:var(--rest-bg);  border-color:var(--rest);  color:var(--rest-t); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.3rem; }
+
+  /* ── EXPORT ── */
+  .export-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: .75rem 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;
+  }
+  .export-info { font-size: 12px; color: var(--text2); }
+  .export-info strong { color: var(--text); }
+  .export-actions { display: flex; gap: 8px; }
+
+  /* ── LEGEND ── */
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: .75rem; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .leg-dot.study  { background:var(--study); }
+  .leg-dot.life   { background:var(--life); }
+  .leg-dot.health { background:var(--health); }
+  .leg-dot.social { background:var(--social); }
+  .leg-dot.rest   { background:var(--rest); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 9px 18px;
+    border-radius: 20px; font-size: 13px; font-weight: 500;
+    z-index: 999; pointer-events: none; opacity: 0;
+    transition: opacity .25s;
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .container { padding: 1rem; }
+    .topbar { padding: 0 1rem; }
+    .user-chip-email { max-width: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading your planner…</div>
+</div>
+
+<!-- ── AUTH SCREEN ── -->
+<div class="auth-screen" id="auth-screen" style="display:none;">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-brand-dot"></div>
+      <div class="auth-brand-name">Balance Planner</div>
+    </div>
+    <div class="auth-title" id="auth-title">Welcome back</div>
+    <div class="auth-sub" id="auth-sub">Sign in to access your schedule</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Create account</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-success" id="auth-success"></div>
+
+    <div class="auth-field">
+      <label class="auth-label">Email</label>
+      <input type="email" class="auth-input" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doAuth()" />
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Password</label>
+      <input type="password" class="auth-input" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()" />
+    </div>
+
+    <button class="auth-btn" id="auth-btn" onclick="doAuth()">
+      <i class="fas fa-sign-in-alt"></i>
+      <span id="auth-btn-text">Sign in</span>
+    </button>
+  </div>
+</div>
+
+<!-- ── APP SCREEN ── -->
+<div id="app-screen">
+  <nav class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      Balance Planner
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="exportJSON()"><i class="fas fa-download"></i> Export</button>
+      <label class="btn btn-ghost" style="cursor:pointer"><i class="fas fa-upload"></i> Import <input type="file" accept=".json" onchange="importJSON(event)" style="display:none"/></label>
+      <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Add event</button>
+      <div class="user-chip">
+        <i class="fas fa-user-circle"></i>
+        <span class="user-chip-email" id="user-email-display">—</span>
+      </div>
+      <button class="btn btn-ghost" onclick="doSignOut()" title="Sign out"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="export-bar">
+      <div class="export-info">
+        <strong id="event-count">0</strong> events scheduled &nbsp;·&nbsp; Balance score: <strong id="score-inline">—</strong>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="cal-controls">
+      <div class="cal-controls-left">
+        <button class="btn btn-icon" onclick="navPrev()"><i class="fas fa-chevron-left"></i></button>
+        <button class="btn btn-icon" onclick="navNext()"><i class="fas fa-chevron-right"></i></button>
+        <span class="month-label" id="period-label"></span>
+        <button class="btn btn-ghost" onclick="goToday()" style="padding:6px 10px;font-size:12px;">Today</button>
+      </div>
+      <div class="cal-controls-right">
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-month" onclick="switchView('month')">Month</button>
+          <button class="view-btn" id="btn-week" onclick="switchView('week')">Week</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div>
+        <div id="month-view" class="card"></div>
+        <div id="week-view" class="card" style="display:none;"></div>
+      </div>
+      <div class="sidebar">
+        <div class="card card-inner" id="score-panel"></div>
+        <div class="card card-inner" id="balance-panel"></div>
+        <div class="card card-inner" id="tips-panel"></div>
+        <div class="card card-inner" id="day-panel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal-backdrop" id="modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add event</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input type="text" id="f-title" placeholder="e.g. Study session" onkeydown="if(event.key==='Enter')saveEvent()" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="cat-pills" id="cat-pills"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" id="f-date" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Time</label>
+      <div class="time-grid">
+        <div><label class="form-label" style="margin-bottom:3px;">Start</label><input type="time" id="f-start" value="09:00"/></div>
+        <div><label class="form-label" style="margin-bottom:3px;">End</label><input type="time" id="f-end" value="10:00"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveEvent()"><i class="fas fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── SUPABASE ─────────────────────────────────────── */
+const SUPABASE_URL = 'https://gqzslffwhjdpondvfsnq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxenNsZmZ3aGpkcG9uZHZmc25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQwNTksImV4cCI6MjA5NTM3MDA1OX0.8C00HZLMuonly26zHO_DAXOGB8kji9YGowaytGUDJjQ';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ─── CONSTANTS ────────────────────────────────────── */
+const CATS = [
+  {key:'study',  label:'Study'},
+  {key:'life',   label:'Life'},
+  {key:'health', label:'Health'},
+  {key:'social', label:'Social'},
+  {key:'rest',   label:'Rest'},
+];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const HOURS = Array.from({length:17},(_,i)=>i+7);
+
+/* ─── STATE ─────────────────────────────────────────── */
+let events = [];
+let view = 'month';
+let curYear = new Date().getFullYear();
+let curMonth = new Date().getMonth();
+let weekStart = startOfWeek(toDateStr(new Date()));
+let selectedDate = toDateStr(new Date());
+let formCat = 'study';
+let currentUser = null;
+let authMode = 'login';
+
+/* ─── HELPERS ───────────────────────────────────────── */
+function toDateStr(d) { return d.toISOString().slice(0,10); }
+function addDays(s, n) { const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()+n); return toDateStr(d); }
+function startOfWeek(s) { const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()-d.getDay()); return toDateStr(d); }
+function timeDiff(s,e) { const[sh,sm]=s.split(':').map(Number);const[eh,em]=e.split(':').map(Number); return Math.max(0,(eh*60+em)-(sh*60+sm))/60; }
+function toMin(t) { const[h,m]=t.split(':').map(Number); return h*60+m; }
+function fmt12(t) { const[h,m]=t.split(':').map(Number); const ap=h>=12?'pm':'am'; return((h%12)||12)+(m?':'+String(m).padStart(2,'0'):'')+ap; }
+function today() { return toDateStr(new Date()); }
+function evByDate(dateStr) { return events.filter(e=>e.date===dateStr).sort((a,b)=>a.start.localeCompare(b.start)); }
+
+/* ─── AUTH UI ───────────────────────────────────────── */
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('active', mode==='login');
+  document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+  document.getElementById('auth-title').textContent = mode==='login' ? 'Welcome back' : 'Create account';
+  document.getElementById('auth-sub').textContent = mode==='login' ? 'Sign in to access your schedule' : 'Start tracking your balance';
+  document.getElementById('auth-btn-text').textContent = mode==='login' ? 'Sign in' : 'Create account';
+  document.querySelector('#auth-btn i').className = mode==='login' ? 'fas fa-sign-in-alt' : 'fas fa-user-plus';
+  clearAuthMessages();
+}
+
+function clearAuthMessages() {
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-success').classList.remove('show');
+}
+
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-error').classList.remove('show');
+}
+
+async function doAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  if(!email || !password) { showAuthError('Please enter your email and password.'); return; }
+
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Please wait…</span>';
+  clearAuthMessages();
+
+  try {
+    if(authMode === 'login') {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+      // Explicitly handle successful login rather than relying solely on onAuthStateChange
+      if(data?.session?.user) {
+        booted = true;
+        currentUser = data.session.user;
+        await loadUserEvents();
+        showApp();
+      } else {
+        // Signed in but no session — email confirmation likely still pending
+        showAuthError('Please confirm your email address before signing in.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>';
+      }
+      return;
+    } else {
+      const { error } = await sb.auth.signUp({ email, password });
+      if(error) throw error;
+      showAuthSuccess('Account created! Check your email to confirm, then sign in.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="auth-btn-text">Sign in</span>';
+      switchAuthTab('login');
+      return;
+    }
+  } catch(err) {
+    showAuthError(err.message || 'Something went wrong. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = authMode==='login'
+      ? '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>'
+      : '<i class="fas fa-user-plus"></i> <span>Create account</span>';
+  }
+}
+
+async function doSignOut() {
+  await sb.auth.signOut();
+}
+
+/* ─── SESSION MANAGEMENT ────────────────────────────── */
+async function bootApp() {
+  let booted = false;
+
+  // Listen for auth state changes (sign-in / sign-out after initial load)
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if(session?.user && !booted) {
+      booted = true;
+      currentUser = session.user;
+      await loadUserEvents();
+      showApp();
+    } else if(!session) {
+      booted = false;
+      currentUser = null;
+      events = [];
+      showAuth();
+    }
+  });
+
+  // Handle existing session directly on page load
+  const { data: { session }, error } = await sb.auth.getSession();
+  if(session?.user && !error) {
+    booted = true;
+    currentUser = session.user;
+    try {
+      await loadUserEvents();
+    } catch(e) {
+      console.error('Failed to load events:', e);
+    }
+    showApp();
+  } else {
+    hideLoading();
+    showAuth();
+  }
+}
+
+function showAuth() {
+  hideLoading();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  setTimeout(()=>document.getElementById('auth-email').focus(), 100);
+}
+
+function showApp() {
+  hideLoading();
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('user-email-display').textContent = currentUser.email;
+  buildCatPills();
+  buildLegend();
+  render();
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
+
+/* ─── DATABASE OPERATIONS ───────────────────────────── */
+async function loadUserEvents() {
+  const { data, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('date', { ascending: true });
+
+  if(error) { console.error('Load error:', error); return; }
+
+  events = (data || []).map(row => ({
+    id: row.id,
+    date: row.date,
+    title: row.title,
+    cat: row.cat,
+    start: row.start,
+    end: row.end,
+  }));
+}
+
+async function dbInsertEvent(ev) {
+  const { data, error } = await sb
+    .from('events')
+    .insert({
+      user_id: currentUser.id,
+      title: ev.title,
+      date: ev.date,
+      cat: ev.cat,
+      start: ev.start,
+      end: ev.end,
+    })
+    .select()
+    .single();
+
+  if(error) throw error;
+  return data;
+}
+
+async function dbDeleteEvent(id) {
+  const { error } = await sb
+    .from('events')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', currentUser.id);
+
+  if(error) throw error;
+}
+
+/* ─── BALANCE LOGIC ─────────────────────────────────── */
+function computeBalance() {
+  const totals = {}; CATS.forEach(c=>totals[c.key]=0);
+  events.forEach(e=>{ if(e.start&&e.end) totals[e.cat]=(totals[e.cat]||0)+timeDiff(e.start,e.end); });
+  const total = Object.values(totals).reduce((a,b)=>a+b,0);
+  return CATS.map(c=>({...c, hrs:totals[c.key], pct:total?Math.round(totals[c.key]/total*100):0}));
+}
+
+function computeScore(bal) {
+  if(!bal.some(b=>b.pct>0)) return {val:0,label:'No events yet'};
+  const ideal=100/5;
+  const dev=bal.reduce((a,b)=>a+Math.abs(b.pct-ideal),0)/5;
+  const s=Math.max(0,Math.round(100-dev*2));
+  const label=s>=80?'Excellent balance':s>=60?'Good balance':s>=40?'Fair balance':'Needs more variety';
+  return {val:s,label};
+}
+
+/* ─── NAVIGATION ────────────────────────────────────── */
+function navPrev() { if(view==='month'){if(curMonth===0){curMonth=11;curYear--;}else curMonth--;} else weekStart=addDays(weekStart,-7); render(); }
+function navNext() { if(view==='month'){if(curMonth===11){curMonth=0;curYear++;}else curMonth++;} else weekStart=addDays(weekStart,7); render(); }
+function goToday()  { curYear=new Date().getFullYear(); curMonth=new Date().getMonth(); weekStart=startOfWeek(today()); selectedDate=today(); render(); }
+function switchView(v) {
+  view=v;
+  document.getElementById('btn-month').classList.toggle('active',v==='month');
+  document.getElementById('btn-week').classList.toggle('active',v==='week');
+  document.getElementById('month-view').style.display=v==='month'?'':'none';
+  document.getElementById('week-view').style.display=v==='week'?'':'none';
+  render();
+}
+
+/* ─── RENDER ────────────────────────────────────────── */
+function render() {
+  renderPeriodLabel();
+  if(view==='month') renderMonth();
+  else renderWeek();
+  renderSidebar();
+  updateTopStats();
+}
+
+function renderPeriodLabel() {
+  if(view==='month') {
+    document.getElementById('period-label').textContent=`${MONTHS[curMonth]} ${curYear}`;
+  } else {
+    const s=new Date(weekStart+'T12:00:00');
+    const eDt=new Date(addDays(weekStart,6)+'T12:00:00');
+    if(s.getMonth()===eDt.getMonth())
+      document.getElementById('period-label').textContent=`${MONTHS[s.getMonth()]} ${s.getDate()}–${eDt.getDate()}, ${s.getFullYear()}`;
+    else
+      document.getElementById('period-label').textContent=`${MONTHS[s.getMonth()]} ${s.getDate()} – ${MONTHS[eDt.getMonth()]} ${eDt.getDate()}, ${eDt.getFullYear()}`;
+  }
+}
+
+function renderMonth() {
+  const first=new Date(curYear,curMonth,1);
+  const last=new Date(curYear,curMonth+1,0);
+  const days=[];
+  for(let i=0;i<first.getDay();i++){const d=new Date(curYear,curMonth,-first.getDay()+1+i);days.push({date:toDateStr(d),cur:false});}
+  for(let d=1;d<=last.getDate();d++){const dt=new Date(curYear,curMonth,d);days.push({date:toDateStr(dt),cur:true});}
+  while(days.length%7!==0){const l=new Date(days[days.length-1].date+'T12:00:00');l.setDate(l.getDate()+1);days.push({date:toDateStr(l),cur:false});}
+
+  let html=`<div class="day-names">${DAYS.map(d=>`<div class="day-name">${d}</div>`).join('')}</div><div class="cal-grid">`;
+  days.forEach(({date,cur})=>{
+    const evs=evByDate(date);
+    const isToday=date===today();
+    const isSel=date===selectedDate;
+    html+=`<div class="cal-cell${!cur?' other-month':''}${isToday?' is-today':''}${isSel?' is-selected':''}" onclick="selectDate('${date}')">
+      <div class="dn">${parseInt(date.slice(-2))}</div>
+      ${evs.slice(0,3).map(e=>`<div class="edot ${e.cat}">${e.title}</div>`).join('')}
+      ${evs.length>3?`<div style="font-size:9px;color:var(--text3);padding:1px 4px;">+${evs.length-3} more</div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('month-view').innerHTML=html;
+}
+
+function renderWeek() {
+  const weekDays=Array.from({length:7},(_,i)=>addDays(weekStart,i));
+  let html=`<div class="week-head"><div style="width:52px;border-right:1px solid var(--border);"></div>`;
+  weekDays.forEach(d=>{
+    const dt=new Date(d+'T12:00:00');
+    const isT=d===today();
+    html+=`<div class="week-head-cell" onclick="selectDate('${d}')">
+      <div class="whc-day">${DAYS[dt.getDay()]}</div>
+      <div class="whc-num${isT?' today-n':''}">${dt.getDate()}</div>
+    </div>`;
+  });
+  html+=`</div><div class="week-body">
+    <div class="time-col">${HOURS.map(h=>`<div class="time-slot"><span>${h===12?'12pm':h>12?`${h-12}pm`:`${h}am`}</span></div>`).join('')}</div>
+    <div class="week-cols">`;
+  weekDays.forEach(d=>{
+    const dayEvs=evByDate(d);
+    html+=`<div class="week-col" onclick="selectDate('${d}')">
+      ${HOURS.map(()=>`<div class="hour-row"><div class="half-line" style="top:26px;position:relative;"></div></div>`).join('')}
+      ${dayEvs.filter(ev=>{const sh=parseInt(ev.start);return sh>=7&&sh<=23;}).map(ev=>{
+        const startMin=toMin(ev.start);
+        const endMin=toMin(ev.end);
+        const top=(startMin-420)/60*52;
+        const height=Math.max(20,(endMin-startMin)/60*52);
+        return `<div class="week-event ${ev.cat}" style="top:${top}px;height:${height}px;" onclick="event.stopPropagation();selectDate('${d}')">
+          <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.title}</div>
+          ${height>30?`<div style="opacity:.7;font-size:9px;">${fmt12(ev.start)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+  html+=`</div></div>`;
+  document.getElementById('week-view').innerHTML=html;
+}
+
+function renderSidebar() {
+  const bal=computeBalance();
+  const score=computeScore(bal);
+
+  document.getElementById('score-panel').innerHTML=`
+    <div class="score-wrap">
+      <div class="score-num">${score.val}</div>
+      <div class="score-label">${score.label}</div>
+      <div class="score-track"><div class="score-fill" style="width:${score.val}%"></div></div>
+    </div>`;
+
+  document.getElementById('balance-panel').innerHTML=`
+    <div class="card-title">Time breakdown</div>
+    ${bal.map(b=>`<div class="bal-row">
+      <div class="bal-labels"><span class="bal-name">${b.label}</span><span class="bal-stat">${b.pct}% · ${b.hrs.toFixed(1)}h</span></div>
+      <div class="bal-track"><div class="bal-fill ${b.key}" style="width:${b.pct}%"></div></div>
+    </div>`).join('')}`;
+
+  const sorted=[...bal].sort((a,b)=>a.pct-b.pct);
+  const low=sorted[0]; const high=sorted[sorted.length-1];
+  const tips=[];
+  if(high.pct>50) tips.push({icon:'fa-triangle-exclamation',text:`Heavy <strong>${high.label}</strong> load. Try balancing with other activities.`});
+  if(low.pct<8)   tips.push({icon:'fa-lightbulb',text:`<strong>${low.label}</strong> time is very low. Even a little goes a long way.`});
+  if(!tips.length) tips.push({icon:'fa-face-smile',text:'Great spread across all 5 categories. Keep it balanced!'});
+  document.getElementById('tips-panel').innerHTML=`
+    <div class="card-title">Insights</div>
+    ${tips.map(t=>`<div class="tip-row"><i class="fas ${t.icon} tip-icon"></i><span class="tip-text">${t.text}</span></div>`).join('')}`;
+
+  const dayEvs=evByDate(selectedDate);
+  const label=selectedDate?new Date(selectedDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'Select a day';
+  document.getElementById('day-panel').innerHTML=`
+    <div class="dpanel-head">
+      ${label}
+      <button class="add-here-btn" onclick="openModal('${selectedDate}')"><i class="fas fa-plus"></i> Add</button>
+    </div>
+    ${dayEvs.length===0?'<div class="empty-day">No events — tap Add to schedule</div>':
+      dayEvs.map(ev=>`<div class="day-ev">
+        <div class="dev-dot ${ev.cat}"></div>
+        <div class="dev-info">
+          <div class="dev-title">${ev.title}</div>
+          <div class="dev-time">${fmt12(ev.start)} – ${fmt12(ev.end)}</div>
+        </div>
+        <button class="del-btn" onclick="deleteEvent('${ev.id}')"><i class="fas fa-times"></i></button>
+      </div>`).join('')}`;
+}
+
+function updateTopStats() {
+  const bal=computeBalance();
+  const score=computeScore(bal);
+  document.getElementById('event-count').textContent=events.length;
+  document.getElementById('score-inline').textContent=score.val+'/100';
+}
+
+function buildLegend() {
+  document.getElementById('legend').innerHTML=CATS.map(c=>`
+    <div class="leg-item"><div class="leg-dot ${c.key}"></div>${c.label}</div>`).join('');
+}
+
+function buildCatPills() {
+  document.getElementById('cat-pills').innerHTML=CATS.map(c=>`
+    <button class="cat-pill ${c.key}${c.key===formCat?' active':''}" onclick="setFormCat('${c.key}')">${c.label}</button>`).join('');
+}
+
+/* ─── INTERACTIONS ──────────────────────────────────── */
+function selectDate(d) {
+  selectedDate=d;
+  const dt=new Date(d+'T12:00:00');
+  curYear=dt.getFullYear(); curMonth=dt.getMonth();
+  renderSidebar();
+  if(view==='month') renderMonth();
+}
+
+async function deleteEvent(id) {
+  try {
+    await dbDeleteEvent(id);
+    events = events.filter(e => e.id !== id);
+    render();
+    showToast('Event removed');
+  } catch(err) {
+    showToast('Failed to delete event');
+    console.error(err);
+  }
+}
+
+/* ─── MODAL ─────────────────────────────────────────── */
+function openModal(date) {
+  document.getElementById('f-title').value='';
+  document.getElementById('f-date').value=date||selectedDate||today();
+  document.getElementById('f-start').value='09:00';
+  document.getElementById('f-end').value='10:00';
+  formCat='study';
+  buildCatPills();
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('f-title').focus(),50);
+}
+
+function closeModal() { document.getElementById('modal').style.display='none'; }
+
+function setFormCat(cat) {
+  formCat=cat;
+  document.querySelectorAll('.cat-pill').forEach(el=>{
+    el.classList.toggle('active',el.classList.contains(cat));
+  });
+}
+
+async function saveEvent() {
+  const title=document.getElementById('f-title').value.trim();
+  const date=document.getElementById('f-date').value;
+  const start=document.getElementById('f-start').value;
+  const end=document.getElementById('f-end').value;
+  if(!title){document.getElementById('f-title').focus();return;}
+
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+
+  try {
+    const newRow = await dbInsertEvent({ title, date, cat: formCat, start, end });
+    events.push({ id: newRow.id, date, title, cat: formCat, start, end });
+    selectedDate = date;
+    const dt = new Date(date+'T12:00:00');
+    curYear = dt.getFullYear(); curMonth = dt.getMonth();
+    if(view==='week') weekStart = startOfWeek(date);
+    closeModal();
+    render();
+    showToast('Event added');
+  } catch(err) {
+    showToast('Failed to save event');
+    console.error(err);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fas fa-check"></i> Save';
+  }
+}
+
+/* ─── EXPORT / IMPORT ───────────────────────────────── */
+function exportJSON() {
+  const data=JSON.stringify(events,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='balance-planner-events.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Events exported');
+}
+
+async function importJSON(e) {
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try {
+      const data=JSON.parse(ev.target.result);
+      if(!Array.isArray(data)) { showToast('Invalid file'); return; }
+      showToast('Importing…');
+      let count = 0;
+      for(const item of data) {
+        if(!item.title || !item.date || !item.cat || !item.start || !item.end) continue;
+        try {
+          const row = await dbInsertEvent({
+            title: item.title, date: item.date,
+            cat: item.cat, start: item.start, end: item.end
+          });
+          events.push({ id: row.id, date: item.date, title: item.title, cat: item.cat, start: item.start, end: item.end });
+          count++;
+        } catch(err) { console.error('Import row error:', err); }
+      }
+      render();
+      showToast(`Imported ${count} events`);
+    } catch(err){ showToast('Invalid file'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+/* ─── TOAST ─────────────────────────────────────────── */
+let toastTimer=null;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ─── KEYBOARD ──────────────────────────────────────── */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeModal();
+  if(e.key==='n'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) openModal();
+});
+
+/* ─── BOOT ──────────────────────────────────────────── */
+// Safety net: if nothing resolves in 6s, fall back to auth screen
+setTimeout(() => {
+  if(!document.getElementById('loading-overlay').classList.contains('hidden')) {
+    hideLoading();
+    showAuth();
+  }
+}, 6000);
+
+bootApp();
+</script>
+</body>
+</html>
