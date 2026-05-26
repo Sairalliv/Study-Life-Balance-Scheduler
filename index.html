@@ -794,11 +794,14 @@ async function handleSession(session) {
       hideLoadingAndShowAuth();
     }
   } catch (err) {
-    console.error('Session handling error:', err);
-    // Show auth screen with error message
-    hideLoadingAndShowAuth();
-    showAuthError('Could not load your data. Please try again later.');
-  }
+  console.error('Session handling error:', err);
+  // Always fall back to auth screen with error message
+  hideLoadingAndShowAuth();
+  showAuthError('Could not load your data. Please try again later.');
+  // Also reset currentUser to null so safety timeout doesn't get confused
+  currentUser = null;
+  isAuthInitialized = false;
+}
 }
 
 async function bootApp() {
@@ -808,13 +811,19 @@ async function bootApp() {
   if (overlay && !overlay.classList.contains('hidden')) {
     console.warn('Safety timeout: forcing fallback UI');
     overlay.classList.add('hidden');
-    // If we have a currentUser but app screen not shown, try to show it
+    // Ensure at least one screen is visible
     if (currentUser && document.getElementById('app-screen').style.display !== 'block') {
-      showApp();
+      // Try to show app – if it fails, fallback to auth
+      try {
+        showApp();
+      } catch (e) {
+        console.error('Fallback showApp failed', e);
+        hideLoadingAndShowAuth();
+      }
     } else if (!currentUser) {
       hideLoadingAndShowAuth();
     } else {
-      // Fallback: show auth screen
+      // Last resort: auth screen
       hideLoadingAndShowAuth();
     }
   }
