@@ -804,16 +804,21 @@ async function handleSession(session) {
 async function bootApp() {
   // Set a safety timeout: after 5 seconds, force hide loading and show auth if not already done
   const safetyTimeout = setTimeout(() => {
-    const overlay = document.getElementById('loading-overlay');
-    if(overlay && !overlay.classList.contains('hidden')) {
-      console.warn('Safety timeout: forcing auth screen');
-      overlay.classList.add('hidden');
-      if(!currentUser) {
-        document.getElementById('auth-screen').style.display = 'flex';
-        document.getElementById('app-screen').style.display = 'none';
-      }
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay && !overlay.classList.contains('hidden')) {
+    console.warn('Safety timeout: forcing fallback UI');
+    overlay.classList.add('hidden');
+    // If we have a currentUser but app screen not shown, try to show it
+    if (currentUser && document.getElementById('app-screen').style.display !== 'block') {
+      showApp();
+    } else if (!currentUser) {
+      hideLoadingAndShowAuth();
+    } else {
+      // Fallback: show auth screen
+      hideLoadingAndShowAuth();
     }
-  }, 5000);
+  }
+}, 5000);
 
   // Listen for auth changes
   sb.auth.onAuthStateChange(async (event, session) => {
