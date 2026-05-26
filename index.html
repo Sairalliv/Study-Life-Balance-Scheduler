@@ -711,9 +711,9 @@ async function doAuth() {
       const { error } = await sb.auth.signUp({ email, password });
       if(error) throw error;
       showAuthSuccess('Account created! Check your email to confirm, then sign in.');
-      switchAuthTab('login');
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>';
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="auth-btn-text">Sign in</span>';
+      switchAuthTab('login');  // ← moved AFTER restoring the button, and id added back
       return;
     }
   } catch(err) {
