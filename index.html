@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  /* (keep all your existing CSS exactly as you had it) */
+  /* (Your existing CSS – unchanged) */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #FDFAF4;
@@ -38,6 +38,7 @@
     font-size: 14px;
     line-height: 1.5;
   }
+  /* ── AUTH SCREEN ── */
   .auth-screen {
     min-height: 100vh;
     display: flex;
@@ -134,7 +135,9 @@
     display: none;
   }
   .auth-success.show { display: block; }
+  /* ── APP SCREEN ── */
   #app-screen { display: none; }
+  /* ── LOADING OVERLAY ── */
   .loading-overlay {
     position: fixed; inset: 0;
     background: var(--bg);
@@ -149,6 +152,7 @@
   }
   .loading-text { font-size: 13px; color: var(--text2); }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* ── TOP BAR ── */
   .topbar {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -185,8 +189,10 @@
   .user-chip-email {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* ── MAIN LAYOUT ── */
   .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem; }
   .layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; align-items: start; }
+  /* ── BUTTONS ── */
   .btn {
     border-radius: var(--radius-sm); padding: 7px 14px; font-size: 13px;
     font-family: 'DM Sans', sans-serif; cursor: pointer; font-weight: 500;
@@ -210,6 +216,7 @@
     border-radius: var(--radius-sm);
   }
   .btn-icon:hover { background: var(--surface2); }
+  /* ── VIEW TOGGLE ── */
   .view-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; }
   .view-btn {
     padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer;
@@ -217,6 +224,7 @@
     transition: all .15s;
   }
   .view-btn.active { background: var(--text); color: var(--bg); }
+  /* ── CONTROLS ── */
   .cal-controls {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 1rem; gap: 10px;
@@ -227,6 +235,7 @@
     font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 500;
     min-width: 200px; color: var(--text);
   }
+  /* ── CARD ── */
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
@@ -236,6 +245,7 @@
     font-size: 10px; font-weight: 600; text-transform: uppercase;
     letter-spacing: .07em; color: var(--text3); margin-bottom: 10px;
   }
+  /* ── MONTH CALENDAR ── */
   .day-names {
     display: grid; grid-template-columns: repeat(7,1fr);
     border-bottom: 1px solid var(--border);
@@ -274,6 +284,7 @@
   .edot.health { background:var(--health-bg);color:var(--health-t);}
   .edot.social { background:var(--social-bg);color:var(--social-t);}
   .edot.rest   { background:var(--rest-bg);  color:var(--rest-t);  }
+  /* ── WEEK VIEW ── */
   .week-head {
     display: grid; grid-template-columns: 52px repeat(7,1fr);
     border-bottom: 1px solid var(--border);
@@ -319,6 +330,7 @@
   .week-event.health { background:var(--health-bg);color:var(--health-t);border-color:var(--health);}
   .week-event.social { background:var(--social-bg);color:var(--social-t);border-color:var(--social);}
   .week-event.rest   { background:var(--rest-bg);  color:var(--rest-t);  border-color:var(--rest); }
+  /* ── SIDEBAR ── */
   .sidebar { display: flex; flex-direction: column; gap: .9rem; }
   .score-wrap { text-align: center; padding: .2rem 0 .5rem; }
   .score-num { font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 500; color: var(--text); line-height: 1; }
@@ -339,6 +351,7 @@
   .tip-row { display: flex; gap: 9px; margin-bottom: 8px; align-items: flex-start; }
   .tip-icon { font-size: 13px; color: var(--text3); flex-shrink: 0; margin-top: 1px; }
   .tip-text { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  /* ── DAY PANEL ── */
   .dpanel-head {
     font-size: 13px; font-weight: 500; color: var(--text);
     margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
@@ -371,6 +384,7 @@
   }
   .del-btn:hover { opacity: 1; color: #C0392B; }
   .empty-day { font-size: 12px; color: var(--text3); text-align: center; padding: 14px 0; }
+  /* ── MODAL ── */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(20,16,10,.45);
     z-index: 200; display: flex; align-items: center; justify-content: center;
@@ -417,6 +431,7 @@
   .cat-pill.active.social { background:var(--social-bg);border-color:var(--social);color:var(--social-t);}
   .cat-pill.active.rest   { background:var(--rest-bg);  border-color:var(--rest);  color:var(--rest-t); }
   .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.3rem; }
+  /* ── EXPORT ── */
   .export-bar {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: .75rem 1.1rem;
@@ -433,6 +448,7 @@
   .leg-dot.health { background:var(--health); }
   .leg-dot.social { background:var(--social); }
   .leg-dot.rest   { background:var(--rest); }
+  /* ── TOAST ── */
   .toast {
     position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
     background: var(--text); color: var(--bg); padding: 9px 18px;
@@ -441,6 +457,23 @@
     transition: opacity .25s;
   }
   .toast.show { opacity: 1; }
+  /* ── WARNING BANNER (new) ── */
+  .warning-banner {
+    background: #FFF3E0;
+    border-left: 4px solid #E67E22;
+    padding: 8px 16px;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: #A04000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .warning-banner i {
+    font-size: 14px;
+    color: #E67E22;
+  }
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; }
     .container { padding: 1rem; }
@@ -500,6 +533,12 @@
     </div>
   </nav>
   <div class="container">
+    <!-- NEW: Persistent warning banner -->
+    <div class="warning-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span><strong>Important:</strong> Always click <strong>“Sign out”</strong> before closing the tab to avoid login issues on next visit.</span>
+    </div>
+
     <div class="export-bar">
       <div class="export-info"><strong id="event-count">0</strong> events scheduled &nbsp;·&nbsp; Balance score: <strong id="score-inline">—</strong></div>
       <div class="legend" id="legend"></div>
@@ -598,7 +637,6 @@
   let currentUser = null;
   let authMode = 'login';
   let isAuthInitialized = false;
-  let tableCheckDone = false;
 
   // ---------- HELPERS ----------
   function toDateStr(d) { return d.toISOString().slice(0,10); }
@@ -609,6 +647,7 @@
   function fmt12(t) { const[h,m]=t.split(':').map(Number); const ap=h>=12?'pm':'am'; return((h%12)||12)+(m?':'+String(m).padStart(2,'0'):'')+ap; }
   function today() { return toDateStr(new Date()); }
   function evByDate(dateStr) { return events.filter(e=>e.date===dateStr).sort((a,b)=>a.start.localeCompare(b.start)); }
+  function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
   // ---------- UI Helpers ----------
   function showToast(msg) {
@@ -617,7 +656,6 @@
     if(window.toastTimer) clearTimeout(window.toastTimer);
     window.toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
   }
-
   function clearAuthMessages() {
     document.getElementById('auth-error')?.classList.remove('show');
     document.getElementById('auth-success')?.classList.remove('show');
@@ -632,7 +670,6 @@
     if(el) { el.textContent = msg; el.classList.add('show'); }
     document.getElementById('auth-error')?.classList.remove('show');
   }
-
   function hideLoadingAndShowAuth() {
     const loadingOverlay = document.getElementById('loading-overlay');
     if(loadingOverlay) loadingOverlay.classList.add('hidden');
@@ -641,7 +678,6 @@
     if(authScreen) authScreen.style.display = 'flex';
     if(appScreen) appScreen.style.display = 'none';
   }
-
   function showApp() {
     const loadingOverlay = document.getElementById('loading-overlay');
     if(loadingOverlay) loadingOverlay.classList.add('hidden');
@@ -653,27 +689,6 @@
     buildCatPills();
     buildLegend();
     render();
-  }
-
-  // ---------- Database: ensure events table exists (one-time check) ----------
-  async function ensureEventsTable() {
-    if (tableCheckDone) return true;
-    try {
-      // Try to select 1 row to see if table exists
-      const { error } = await sb.from('events').select('id', { count: 'exact', head: true });
-      if (error && error.message.includes('relation "events" does not exist')) {
-        console.warn('Events table missing, creating...');
-        // Note: You cannot create tables from client-side JS with anon key (needs service_role).
-        // Instead, show a helpful error message and fallback to demo mode.
-        showToast('⚠️ Missing "events" table. Please create it in Supabase dashboard.');
-        return false;
-      }
-      tableCheckDone = true;
-      return true;
-    } catch (err) {
-      console.error('Table check error:', err);
-      return false;
-    }
   }
 
   // ---------- CRUD ----------
@@ -697,7 +712,6 @@
       end: row.end,
     }));
   }
-
   async function dbInsertEvent(ev) {
     const { data, error } = await sb
       .from('events')
@@ -714,7 +728,6 @@
     if(error) throw error;
     return data;
   }
-
   async function dbDeleteEvent(id) {
     const { error } = await sb
       .from('events')
@@ -753,7 +766,6 @@
         document.getElementById('period-label').textContent=`${MONTHS[s.getMonth()]} ${s.getDate()} – ${MONTHS[eDt.getMonth()]} ${eDt.getDate()}, ${eDt.getFullYear()}`;
     }
   }
-
   function renderMonth() {
     const first=new Date(curYear,curMonth,1);
     const last=new Date(curYear,curMonth+1,0);
@@ -775,7 +787,6 @@
     html+='</div>';
     document.getElementById('month-view').innerHTML=html;
   }
-
   function renderWeek() {
     const weekDays=Array.from({length:7},(_,i)=>addDays(weekStart,i));
     let html=`<div class="week-head"><div style="width:52px;border-right:1px solid var(--border);"></div>`;
@@ -809,7 +820,6 @@
     html+=`</div></div>`;
     document.getElementById('week-view').innerHTML=html;
   }
-
   function renderSidebar() {
     const bal=computeBalance();
     const score=computeScore(bal);
@@ -851,14 +861,12 @@
           <button class="del-btn" onclick="window.deleteEvent('${ev.id}')"><i class="fas fa-times"></i></button>
         </div>`).join('')}`;
   }
-
   function updateTopStats() {
     const bal=computeBalance();
     const score=computeScore(bal);
     document.getElementById('event-count').textContent=events.length;
     document.getElementById('score-inline').textContent=score.val+'/100';
   }
-
   function buildLegend() {
     document.getElementById('legend').innerHTML=CATS.map(c=>`
       <div class="leg-item"><div class="leg-dot ${c.key}"></div>${c.label}</div>`).join('');
@@ -867,8 +875,6 @@
     document.getElementById('cat-pills').innerHTML=CATS.map(c=>`
       <button class="cat-pill ${c.key}${c.key===formCat?' active':''}" onclick="window.setFormCat('${c.key}')">${c.label}</button>`).join('');
   }
-  function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-
   function render() {
     if(!currentUser) return;
     renderPeriodLabel();
@@ -878,7 +884,7 @@
     updateTopStats();
   }
 
-  // ---------- Navigation & UI Actions ----------
+  // ---------- Navigation & UI Actions (exposed globally) ----------
   window.navPrev = function() { if(view==='month'){if(curMonth===0){curMonth=11;curYear--;}else curMonth--;} else weekStart=addDays(weekStart,-7); render(); };
   window.navNext = function() { if(view==='month'){if(curMonth===11){curMonth=0;curYear++;}else curMonth++;} else weekStart=addDays(weekStart,7); render(); };
   window.goToday = function() { curYear=new Date().getFullYear(); curMonth=new Date().getMonth(); weekStart=startOfWeek(today()); selectedDate=today(); render(); };
@@ -1013,7 +1019,8 @@
       } else {
         const { error } = await sb.auth.signUp({ email, password });
         if(error) throw error;
-        showAuthSuccess('Account created! Check your email to confirm, then sign in.');
+        // NEW: explicit email verification message
+        showAuthSuccess('Account created! Please check your email for a confirmation link before signing in.');
         window.switchAuthTab('login');
       }
     } catch(err) {
@@ -1037,7 +1044,6 @@
         if(!isAuthInitialized) {
           isAuthInitialized = true;
           currentUser = session.user;
-          await ensureEventsTable();
           await loadUserEvents();
           showApp();
         } else {
@@ -1088,7 +1094,6 @@
     }
   }
 
-  // ---------- Start ----------
   bootApp();
 })();
 </script>
