@@ -653,6 +653,7 @@ let selectedDate = toDateStr(new Date());
 let formCat = 'study';
 let currentUser = null;
 let authMode = 'login';
+let isAuthInitialized = false; // prevent duplicate loads from onAuthStateChange
 
 /* ─── HELPERS ───────────────────────────────────────── */
 function toDateStr(d) { return d.toISOString().slice(0,10); }
@@ -705,36 +706,26 @@ async function doAuth() {
 
   try {
     if(authMode === 'login') {
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
       if(error) throw error;
-      // Explicitly handle successful login rather than relying solely on onAuthStateChange
-      if(data?.session?.user) {
-        booted = true;
-        currentUser = data.session.user;
-        await loadUserEvents();
-        showApp();
-      } else {
-        // Signed in but no session — email confirmation likely still pending
-        showAuthError('Please confirm your email address before signing in.');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>';
-      }
-      return;
+      // Do NOT call loadUserEvents or showApp here – onAuthStateChange will trigger
     } else {
       const { error } = await sb.auth.signUp({ email, password });
       if(error) throw error;
       showAuthSuccess('Account created! Check your email to confirm, then sign in.');
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="auth-btn-text">Sign in</span>';
       switchAuthTab('login');
-      return;
     }
   } catch(err) {
-    showAuthError(err.message || 'Something went wrong. Please try again.');
-    btn.disabled = false;
-    btn.innerHTML = authMode==='login'
-      ? '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>'
-      : '<i class="fas fa-user-plus"></i> <span>Create account</span>';
+    showAuthError(err.message || 'Sign in failed. Please try again.');
+    console.error('Auth error:', err);
+  } finally {
+    // Only re-enable button if we're still on the auth screen (login error or after signup)
+    if(document.getElementById('auth-screen').style.display !== 'none') {
+      btn.disabled = false;
+      btn.innerHTML = authMode==='login'
+        ? '<i class="fas fa-sign-in-alt"></i> <span>Sign in</span>'
+        : '<i class="fas fa-user-plus"></i> <span>Create account</span>';
+    }
   }
 }
 
@@ -743,71 +734,19 @@ async function doSignOut() {
 }
 
 /* ─── SESSION MANAGEMENT ────────────────────────────── */
-async function bootApp() {
-  let booted = false;
-
-  // Listen for auth state changes (sign-in / sign-out after initial load)
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if(session?.user && !booted) {
-      booted = true;
-      currentUser = session.user;
-      await loadUserEvents();
-      showApp();
-    } else if(!session) {
-      booted = false;
-      currentUser = null;
-      events = [];
-      showAuth();
-    }
-  });
-
-  // Handle existing session directly on page load
-  const { data: { session }, error } = await sb.auth.getSession();
-  if(session?.user && !error) {
-    booted = true;
-    currentUser = session.user;
-    try {
-      await loadUserEvents();
-    } catch(e) {
-      console.error('Failed to load events:', e);
-    }
-    showApp();
-  } else {
-    hideLoading();
-    showAuth();
-  }
-}
-
-function showAuth() {
-  hideLoading();
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-screen').style.display = 'none';
-  setTimeout(()=>document.getElementById('auth-email').focus(), 100);
-}
-
-function showApp() {
-  hideLoading();
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
-  document.getElementById('user-email-display').textContent = currentUser.email;
-  buildCatPills();
-  buildLegend();
-  render();
-}
-
-function hideLoading() {
-  document.getElementById('loading-overlay').classList.add('hidden');
-}
-
-/* ─── DATABASE OPERATIONS ───────────────────────────── */
 async function loadUserEvents() {
+  if(!currentUser) return;
   const { data, error } = await sb
     .from('events')
     .select('*')
     .eq('user_id', currentUser.id)
     .order('date', { ascending: true });
 
-  if(error) { console.error('Load error:', error); return; }
+  if(error) {
+    console.error('Load events error:', error);
+    showToast('Failed to load events');
+    return;
+  }
 
   events = (data || []).map(row => ({
     id: row.id,
@@ -819,6 +758,64 @@ async function loadUserEvents() {
   }));
 }
 
+function showAuth() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  setTimeout(()=>document.getElementById('auth-email').focus(), 100);
+}
+
+function showApp() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('user-email-display').textContent = currentUser?.email || '—';
+  buildCatPills();
+  buildLegend();
+  render();
+}
+
+async function handleSession(session) {
+  if(session?.user) {
+    if(!isAuthInitialized) {
+      isAuthInitialized = true;
+      currentUser = session.user;
+      await loadUserEvents();
+      showApp();
+    } else {
+      // Session already active, just update user reference
+      currentUser = session.user;
+    }
+  } else {
+    // No session -> show auth screen
+    isAuthInitialized = false;
+    currentUser = null;
+    events = [];
+    showAuth();
+  }
+}
+
+async function bootApp() {
+  // Listen for auth changes
+  sb.auth.onAuthStateChange(async (event, session) => {
+    await handleSession(session);
+  });
+
+  // Get current session
+  const { data: { session }, error } = await sb.auth.getSession();
+  if(error) console.error('Get session error:', error);
+  await handleSession(session);
+
+  // Fallback: if after 5 seconds nothing is shown (network issues), show auth
+  setTimeout(() => {
+    if(document.getElementById('loading-overlay') && !document.getElementById('loading-overlay').classList.contains('hidden')) {
+      document.getElementById('loading-overlay').classList.add('hidden');
+      if(!currentUser) showAuth();
+    }
+  }, 5000);
+}
+
+/* ─── DATABASE OPERATIONS ───────────────────────────── */
 async function dbInsertEvent(ev) {
   const { data, error } = await sb
     .from('events')
@@ -1147,14 +1144,6 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ─── BOOT ──────────────────────────────────────────── */
-// Safety net: if nothing resolves in 6s, fall back to auth screen
-setTimeout(() => {
-  if(!document.getElementById('loading-overlay').classList.contains('hidden')) {
-    hideLoading();
-    showAuth();
-  }
-}, 6000);
-
 bootApp();
 </script>
 </body>
